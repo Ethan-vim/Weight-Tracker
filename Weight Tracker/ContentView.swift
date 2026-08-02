@@ -1,10 +1,13 @@
 import SwiftUI
 import SwiftData
 
+
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
-
+    @Query(sort: \WeightItem.date, order: .forward) var weights: [WeightItem]
+    
     var body: some View {
         NavigationSplitView {
             List {
@@ -46,9 +49,20 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func addWeight(weight: Float) {
+        let newWeight = WeightItem(weight: weight)
+        modelContext.insert(newWeight)
+    }
+    
+    private func deleteWeights(offsets: IndexSet) {
+        for index in offsets {
+            modelContext.delete(weights[index])
+        }
+    }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Item.self, WeightItem.self], inMemory: true)
 }
