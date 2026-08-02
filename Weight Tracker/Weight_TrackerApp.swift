@@ -1,10 +1,3 @@
-//
-//  Weight_TrackerApp.swift
-//  Weight Tracker
-//
-//  Created by Ethan Hu on 7/24/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -13,6 +6,7 @@ struct Weight_TrackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            WeightItem.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
