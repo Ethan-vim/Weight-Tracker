@@ -28,31 +28,49 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @Query(sort: \WeightItem.date, order: .forward) var weights: [WeightItem]
+    @State private var weightInput: String = ""
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+//        NavigationSplitView {
+//            List {
+//                ForEach(items) { item in
+//                    NavigationLink {
+//                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+//                    } label: {
+//                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+//                    }
+//                }
+//                .onDelete(perform: deleteItems)
+//            }
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    EditButton()
+//                }
+//                ToolbarItem {
+//                    Button(action: addItem) {
+//                        Label("Add Item", systemImage: "plus")
+//                    }
+//                }
+//            }
+//        } detail: {
+//            Text("Select an item")
+//        }
+        VStack {
+            GeometryReader { geo in
+                HStack(spacing: 8) {
+                    TextField("Weight", text: $weightInput)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .frame(width: geo.size.width * 0.8)
+                    Button("Save") {
+                        addWeight(weight: weightInput)
+                        weightInput = ""
                     }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                    .frame(width: geo.size.width * 0.2)
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .frame(height: 44)
+            .padding(.horizontal)
         }
     }
 
@@ -71,8 +89,9 @@ struct ContentView: View {
         }
     }
 
-    private func addWeight(weight: Float) {
-        let newWeight = WeightItem(weight: weight)
+    private func addWeight(weight: String) {
+        guard let weightValue = Float(weight) else { return }
+        let newWeight = WeightItem(weight: weightValue)
         modelContext.insert(newWeight)
     }
 
