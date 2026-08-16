@@ -29,7 +29,8 @@ struct ContentView: View {
     @Query private var items: [Item]
     @Query(sort: \WeightItem.date, order: .forward) var weights: [WeightItem]
     @State private var weightInput: String = ""
-
+    @State private var warningText: String = ""
+    
     var body: some View {
 //        NavigationSplitView {
 //            List {
@@ -56,15 +57,29 @@ struct ContentView: View {
 //            Text("Select an item")
 //        }
         VStack {
+            // Call WeightGraph
+            Text(warningText)
+                .foregroundStyle(Color.red)
+                .task(id: warningText) {
+                    guard !warningText.isEmpty else { return }
+                    try? await Task.sleep(for: .seconds(1))
+                    warningText = ""
+                }
             GeometryReader { geo in
                 HStack(spacing: 8) {
+                    
                     TextField("Weight", text: $weightInput)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.decimalPad)
                         .frame(width: geo.size.width * 0.8)
                     Button("Save") {
-                        addWeight(weight: weightInput)
-                        weightInput = ""
+                        if Double(weightInput) != nil {
+                            addWeight(weight: weightInput)
+                            weightInput = ""
+                        } else {
+                            warningText = "Please input your weight in number format"
+                        }
+                        
                     }
                     .frame(width: geo.size.width * 0.2)
                 }
