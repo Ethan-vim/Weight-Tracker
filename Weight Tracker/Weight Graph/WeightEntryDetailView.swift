@@ -3,7 +3,7 @@ import SwiftData
 
 struct WeightEntryDetailView: View {
     @Bindable var entry: WeightItem
-    var onDelete: () -> Void
+    var onDismiss: () -> Void
 
     @Environment(\.modelContext) private var modelContext
 
@@ -45,8 +45,20 @@ struct WeightEntryDetailView: View {
                     deleteEntry()
                 }
             }
+
+            Section {
+                Button("Back to Graph") {
+                    onDismiss()
+                }
+            }
         }
         .navigationTitle("Weight Entry")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { onDismiss() }
+            }
+        }
         .onAppear(perform: syncInputs)
         .onChange(of: entry.persistentModelID) { _, _ in
             syncInputs()
@@ -76,6 +88,6 @@ struct WeightEntryDetailView: View {
 
     private func deleteEntry() {
         modelContext.delete(entry)
-        onDelete()
+        onDismiss()
     }
 }

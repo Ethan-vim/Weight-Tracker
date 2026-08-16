@@ -32,10 +32,20 @@ struct ContentView: View {
     @State private var warningText: String = ""
     @State private var selectedEntry: WeightItem?
 
+    private var isShowingDetail: Binding<Bool> {
+        Binding(
+            get: { selectedEntry != nil },
+            set: { if !$0 { selectedEntry = nil } }
+        )
+    }
+
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
             VStack {
+                Spacer()
+
                 WeightGraphView(weights: weights, selectedEntry: $selectedEntry)
+                    .frame(height: 260)
 
                 Text(warningText)
                     .foregroundStyle(Color.red)
@@ -65,19 +75,24 @@ struct ContentView: View {
                 }
                 .frame(height: 44)
                 .padding(.horizontal)
+
+                Spacer()
             }
-            .navigationTitle("Weight Graph")
-        } detail: {
-            if let selectedEntry {
-                WeightEntryDetailView(entry: selectedEntry) {
-                    self.selectedEntry = nil
+            .toolbar(.hidden, for: .navigationBar)
+            .inspector(isPresented: isShowingDetail) {
+                NavigationStack {
+                    if let selectedEntry {
+                        WeightEntryDetailView(entry: selectedEntry) {
+                            self.selectedEntry = nil
+                        }
+                    } else {
+                        ContentUnavailableView(
+                            "No Entry Selected",
+                            systemImage: "hand.tap",
+                            description: Text("Tap a dot on the graph to see its weight and date.")
+                        )
+                    }
                 }
-            } else {
-                ContentUnavailableView(
-                    "No Entry Selected",
-                    systemImage: "hand.tap",
-                    description: Text("Tap a dot on the graph to see its weight and date.")
-                )
             }
         }
     }
