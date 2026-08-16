@@ -1,8 +1,15 @@
 import SwiftUI
 import SwiftData
 
+enum Page {
+    case main
+    case calorieEstimator
+}
+
 @main
 struct Weight_TrackerApp: App {
+    @State private var selectedPage: Page = .main
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -19,7 +26,12 @@ struct Weight_TrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            switch selectedPage {
+            case .main:
+                ContentView(selectedPage: $selectedPage)
+            case .calorieEstimator:
+                CalorieEstimatorPage(selectedPage: $selectedPage)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
