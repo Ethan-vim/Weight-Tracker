@@ -30,62 +30,70 @@ struct ContentView: View {
     @Query(sort: \WeightItem.date, order: .forward) var weights: [WeightItem]
     @State private var weightInput: String = ""
     @State private var warningText: String = ""
-    
+    @State private var selectedEntry: WeightItem?
+
+    private var isShowingDetail: Binding<Bool> {
+        Binding(
+            get: { selectedEntry != nil },
+            set: { if !$0 { selectedEntry = nil } }
+        )
+    }
+
     var body: some View {
-//        NavigationSplitView {
-//            List {
-//                ForEach(items) { item in
-//                    NavigationLink {
-//                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-//                    } label: {
-//                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-//                    }
-//                }
-//                .onDelete(perform: deleteItems)
-//            }
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    EditButton()
-//                }
-//                ToolbarItem {
-//                    Button(action: addItem) {
-//                        Label("Add Item", systemImage: "plus")
-//                    }
-//                }
-//            }
-//        } detail: {
-//            Text("Select an item")
-//        }
-        VStack {
-            // Call WeightGraph
-            Text(warningText)
-                .foregroundStyle(Color.red)
-                .task(id: warningText) {
-                    guard !warningText.isEmpty else { return }
-                    try? await Task.sleep(for: .seconds(1))
-                    warningText = ""
-                }
-            GeometryReader { geo in
-                HStack(spacing: 8) {
-                    
-                    TextField("Weight", text: $weightInput)
-                        .textFieldStyle(.roundedBorder)
-                        .keyboardType(.decimalPad)
-                        .frame(width: geo.size.width * 0.8)
-                    Button("Save") {
-                        if Double(weightInput) != nil {
-                            addWeight(weight: weightInput)
-                            weightInput = ""
-                        } else {
-                            warningText = "Please input your weight in number format"
-                        }
-                        
+        NavigationStack {
+            VStack {
+                Spacer()
+
+                WeightGraphView(weights: weights, selectedEntry: $selectedEntry)
+                    .frame(height: 260)
+
+                Text(warningText)
+                    .foregroundStyle(Color.red)
+                    .task(id: warningText) {
+                        guard !warningText.isEmpty else { return }
+                        try? await Task.sleep(for: .seconds(1))
+                        warningText = ""
                     }
-                    .frame(width: geo.size.width * 0.2)
+                GeometryReader { geo in
+                    HStack(spacing: 8) {
+                        
+                        TextField("Weight", text: $weightInput)
+                            .textFieldStyle(.roundedBorder)
+                            .keyboardType(.decimalPad)
+                            .frame(width: geo.size.width * 0.8)
+                        Button("Save") {
+                            if Double(weightInput) != nil {
+                                addWeight(weight: weightInput)
+                                weightInput = ""
+                            } else {
+                                warningText = "Please input your weight in number format"
+                            }
+                            
+                        }
+                        .frame(width: geo.size.width * 0.2)
+                    }
+                }
+                .frame(height: 44)
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .inspector(isPresented: isShowingDetail) {
+                NavigationStack {
+                    if let selectedEntry {
+                        WeightEntryDetailView(entry: selectedEntry) {
+                            self.selectedEntry = nil
+                        }
+                    } else {
+                        ContentUnavailableView(
+                            "No Entry Selected",
+                            systemImage: "hand.tap",
+                            description: Text("Tap a dot on the graph to see its weight and date.")
+                        )
+                    }
                 }
             }
-            .frame(height: 44)
-            .padding(.horizontal)
         }
     }
 
