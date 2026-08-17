@@ -14,12 +14,13 @@ struct CalorieEstimatorPage: View {
                 Text("Back")
                     .font(.caption)
                     .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 60, height: 28)
                     .background(Color.red)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             .buttonStyle(.plain)
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 4)
         }
     }
 }
