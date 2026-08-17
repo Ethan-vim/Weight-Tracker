@@ -77,6 +77,16 @@ struct ContentView: View {
                 .frame(height: 44)
                 .padding(.horizontal)
 
+                Button {
+                    selectedPage = .calorieEstimator
+                } label: {
+                    Text("Calorie Estimator")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.horizontal)
+
                 Spacer()
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -95,18 +105,6 @@ struct ContentView: View {
                     }
                 }
             }
-            .frame(height: 44)
-            .padding(.horizontal)
-
-            Button {
-                selectedPage = .calorieEstimator
-            } label: {
-                Text("Calorie Estimator")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .padding(.horizontal)
         }
     }
 
