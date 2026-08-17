@@ -12,7 +12,7 @@ private struct GeminiResponse: Decodable {
         }
         var content: Content
     }
-    var candidates: [Candidate]
+    var candidates: [Candidate]     
 }
 
 struct NutritionInfo: Codable {
@@ -28,6 +28,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @Query(sort: \WeightItem.date, order: .forward) var weights: [WeightItem]
+    @Binding var selectedPage: Page
     @State private var weightInput: String = ""
     @State private var warningText: String = ""
     @State private var selectedEntry: WeightItem?
@@ -94,6 +95,18 @@ struct ContentView: View {
                     }
                 }
             }
+            .frame(height: 44)
+            .padding(.horizontal)
+
+            Button {
+                selectedPage = .calorieEstimator
+            } label: {
+                Text("Calorie Estimator")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding(.horizontal)
         }
     }
 
@@ -163,6 +176,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(selectedPage: .constant(.main))
         .modelContainer(for: [Item.self, WeightItem.self], inMemory: true)
 }
