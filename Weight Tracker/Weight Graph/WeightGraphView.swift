@@ -28,6 +28,13 @@ struct WeightGraphView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay {
+            // Decorative only, so it must not swallow taps meant for the chart.
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color(.separator), lineWidth: 1)
+                .allowsHitTesting(false)
+        }
+        .padding(.horizontal)
     }
 
     private var chart: some View {
