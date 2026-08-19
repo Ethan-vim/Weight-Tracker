@@ -43,8 +43,6 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Spacer()
-
                 WeightGraphView(weights: weights, selectedEntry: $selectedEntry)
                     .frame(height: 260)
 
@@ -89,6 +87,7 @@ struct ContentView: View {
 
                 Spacer()
             }
+            .padding(.vertical)
             .toolbar(.hidden, for: .navigationBar)
             .inspector(isPresented: isShowingDetail) {
                 NavigationStack {

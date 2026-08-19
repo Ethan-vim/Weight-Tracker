@@ -18,14 +18,14 @@ struct WeightEntryDetailView: View {
                     Text(Double(entry.weight), format: .number.precision(.fractionLength(1)))
                 }
                 LabeledContent("Date") {
-                    Text(entry.date, format: Date.FormatStyle(date: .abbreviated, time: .shortened))
+                    Text(entry.date, format: Date.FormatStyle(date: .abbreviated, time: .omitted))
                 }
             }
 
             Section("Edit") {
                 TextField("Weight", text: $weightInput)
                     .keyboardType(.decimalPad)
-                DatePicker("Date", selection: $dateInput, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("Date", selection: $dateInput, displayedComponents: [.date])
             }
 
             if !warningText.isEmpty {
