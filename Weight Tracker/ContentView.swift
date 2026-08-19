@@ -63,7 +63,6 @@ struct ContentView: View {
                         Button("Save") {
                             if Double(weightInput) != nil {
                                 addWeight(weight: weightInput)
-                                weightInput = ""
                             } else {
                                 warningText = "Please input your weight in number format"
                             }
@@ -124,8 +123,14 @@ struct ContentView: View {
 
     private func addWeight(weight: String) {
         guard let weightValue = Float(weight) else { return }
+        // Two entries on the same day land on the same x position and stack on the graph.
+        guard !weights.contains(where: { Calendar.current.isDateInToday($0.date) }) else {
+            warningText = "You already saved a weight today"
+            return
+        }
         let newWeight = WeightItem(weight: weightValue)
         modelContext.insert(newWeight)
+        weightInput = ""
     }
 
     private func deleteWeights(offsets: IndexSet) {
