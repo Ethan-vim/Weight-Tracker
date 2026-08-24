@@ -1,28 +1,5 @@
 import SwiftUI
 import SwiftData
-import PhotosUI
-
-private let geminiAPIKey = "AQ.Ab8RN6KTLznHf8PmxmO0VEbvwWTXWHoNAkkGDicTOjlo-GKPOg"
-
-private struct GeminiResponse: Decodable {
-    struct Candidate: Decodable {
-        struct Content: Decodable {
-            struct Part: Decodable { var text: String }
-            var parts: [Part]
-        }
-        var content: Content
-    }
-    var candidates: [Candidate]     
-}
-
-struct NutritionInfo: Codable {
-    let calories: Int
-    let proteinPercent: Double
-    let carbsPercent: Double
-    let fatPercent: Double
-    let fiberPercent: Double
-    let advice: String
-}
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -137,43 +114,6 @@ struct ContentView: View {
         for index in offsets {
             modelContext.delete(weights[index])
         }
-    }
-
-    func loadPhoto(from item: PhotosPickerItem) async -> UIImage? {
-        guard let data = try? await item.loadTransferable(type: Data.self),
-              let image = UIImage(data: data) else { return nil }
-        return image
-    }
-
-    func getCalories(from image: UIImage) async throws -> NutritionInfo {
-        let imageData = image.jpegData(compressionQuality: 0.8)!
-
-        let prompt = """
-        Analyze the food in this image. Respond ONLY with valid JSON, no extra text, in this exact format:
-        {
-          "calories": <estimated total calories as an integer>,
-          "proteinPercent": <protein as % of recommended daily value as a number>,
-          "carbsPercent": <carbs as % of recommended daily value as a number>,
-          "fatPercent": <fat as % of recommended daily value as a number>,
-          "fiberPercent": <fiber as % of recommended daily value as a number>,
-          "advice": "<specific advice on how to balance this meal and what to eat alongside it>"
-        }
-        """
-
-        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(geminiAPIKey)")!)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: [
-            "contents": [["parts": [
-                ["text": prompt],
-                ["inline_data": ["mime_type": "image/jpeg", "data": imageData.base64EncodedString()]]
-            ]]]
-        ])
-
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let responseText = try JSONDecoder().decode(GeminiResponse.self, from: data).candidates.first!.content.parts.first!.text
-        let jsonData = responseText.data(using: .utf8)!
-        return try JSONDecoder().decode(NutritionInfo.self, from: jsonData)
     }
 }
 
