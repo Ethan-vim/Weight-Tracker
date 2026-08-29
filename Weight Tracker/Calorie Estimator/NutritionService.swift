@@ -55,14 +55,23 @@ struct NutritionService {
             throw NutritionError.imageEncodingFailed
         }
 
+        // Naming each dish or product before estimating anchors the numbers to something real
+        // instead of a guess from the picture alone, and the daily values are spelled out so the
+        // percentages mean the same thing on every run. Kept short because the model reasons on
+        // its own, and every extra instruction is latency the user waits through.
         let prompt = """
-        Analyze the food in this image. Respond ONLY with valid JSON, no extra text, in this exact format:
+        Identify every distinct food and drink in this image.
+        For anything packaged, identify the brand and product and use its published nutrition facts, scaled to the amount actually shown rather than to one serving.
+        For anything else, name the dish and scale its typical values to the portion shown, judging the amount from what holds it (a small bowl, a full bowl, a plate, a pan) and from anything in frame that gives scale, such as cutlery or a hand.
+        Count the cooking oil, butter, sauce and dressing that add calories without being visible.
+        The figures below are the total across everything shown.
+        Respond ONLY with valid JSON, no extra text, in this exact format:
         {
           "calories": <estimated total calories as an integer>,
-          "proteinPercent": <protein as % of recommended daily value as a number>,
-          "carbsPercent": <carbs as % of recommended daily value as a number>,
-          "fatPercent": <fat as % of recommended daily value as a number>,
-          "fiberPercent": <fiber as % of recommended daily value as a number>,
+          "proteinPercent": <protein as % of the 50 g daily value, as a number>,
+          "carbsPercent": <carbs as % of the 275 g daily value, as a number>,
+          "fatPercent": <fat as % of the 78 g daily value, as a number>,
+          "fiberPercent": <fiber as % of the 28 g daily value, as a number>,
           "advice": "<specific advice on how to balance this meal and what to eat alongside it>"
         }
         """
