@@ -31,6 +31,7 @@ struct ContentView: View {
     @Binding var selectedPage: Page
     @State private var weightInput: String = ""
     @State private var warningText: String = ""
+    @State private var warningCount: Int = 0
     @State private var selectedEntry: WeightItem?
 
     private var isShowingDetail: Binding<Bool> {
@@ -48,7 +49,7 @@ struct ContentView: View {
 
                 Text(warningText)
                     .foregroundStyle(Color.red)
-                    .task(id: warningText) {
+                    .task(id: warningCount) {
                         guard !warningText.isEmpty else { return }
                         try? await Task.sleep(for: .seconds(1))
                         warningText = ""
@@ -64,7 +65,7 @@ struct ContentView: View {
                             if Double(weightInput) != nil {
                                 addWeight(weight: weightInput)
                             } else {
-                                warningText = "Please input your weight in number format"
+                                showWarning("Please input your weight in number format")
                             }
                             
                         }
@@ -121,11 +122,22 @@ struct ContentView: View {
         }
     }
 
+    private func showWarning(_ text: String) {
+        // The auto-clear is keyed on this counter rather than the text, so repeating the
+        // same message restarts the second instead of riding out the previous timer.
+        warningText = text
+        warningCount += 1
+    }
+
     private func addWeight(weight: String) {
         guard let weightValue = Float(weight) else { return }
+        guard weightValue > 0 else {
+            showWarning("Please input a weight greater than zero")
+            return
+        }
         // Two entries on the same day land on the same x position and stack on the graph.
         guard !weights.contains(where: { Calendar.current.isDateInToday($0.date) }) else {
-            warningText = "You already saved a weight today"
+            showWarning("There's already an entry for today")
             return
         }
         let newWeight = WeightItem(weight: weightValue)
