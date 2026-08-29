@@ -105,31 +105,31 @@ struct CalorieEstimatorPage: View {
     }
 
     private var photoWell: some View {
-        ZStack {
-            Color(.secondarySystemBackground)
-
-            if let mealPhoto {
-                // A fill-scaled image overflows its proposal, so the flexible frame keeps the
-                // surrounding layout sized by the well instead of by the photo.
-                Image(uiImage: mealPhoto)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "camera")
-                        .font(.system(size: 36))
-                    Text("Meal Photo")
-                        .font(.subheadline)
+        // A fill-scaled image reports a size bigger than the box it fills, which as a ZStack
+        // child inflates the well itself and leaves the clip cutting at the wrong size. Color
+        // takes exactly the size it is proposed and overlay content never feeds back into it,
+        // so the well stays the size the caller asked for and the photo is clipped to match.
+        Color(.secondarySystemBackground)
+            .overlay {
+                if let mealPhoto {
+                    Image(uiImage: mealPhoto)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: "camera")
+                            .font(.system(size: 36))
+                        Text("Meal Photo")
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.secondary)
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color(.separator), lineWidth: 1)
-        }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color(.separator), lineWidth: 1)
+            }
     }
 
     // MARK: - After a photo is analyzed
@@ -165,7 +165,9 @@ struct CalorieEstimatorPage: View {
             .buttonStyle(.bordered)
             .controlSize(.large)
         }
-        .padding(.horizontal)
+        // Default inset on all four sides, so the block sits off the page edges by the same
+        // amount the advice band insets its own text.
+        .padding()
     }
 
     private func adviceBand(info: NutritionInfo?, message: String?) -> some View {
