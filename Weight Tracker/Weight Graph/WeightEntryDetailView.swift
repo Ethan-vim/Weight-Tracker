@@ -51,7 +51,7 @@ struct WeightEntryDetailView: View {
 
             Section {
                 Button("Back to Graph") {
-                    onDismiss()
+                    dismissSavingChanges()
                 }
             }
         }
@@ -59,7 +59,7 @@ struct WeightEntryDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Done") { onDismiss() }
+                Button("Done") { dismissSavingChanges() }
             }
         }
         .onAppear(perform: syncInputs)
@@ -69,7 +69,11 @@ struct WeightEntryDetailView: View {
     }
 
     private var hasChanges: Bool {
-        Float(weightInput) != entry.weight || dateInput != entry.date
+        // weightInput is rendered at one decimal, so a stored 70.25 shows as "70.3".
+        // Comparing against the raw value would report a change the user never made, and
+        // Done saves on changes, so it would quietly rewrite 70.25 to 70.3 on close.
+        // Parsed, not string-compared, so "70.30" and "70.3" stay equal.
+        Float(weightInput) != Float(String(format: "%.1f", entry.weight)) || dateInput != entry.date
     }
 
     private func syncInputs() {
@@ -78,10 +82,16 @@ struct WeightEntryDetailView: View {
         warningText = ""
     }
 
-    private func saveChanges() {
-        guard let weightValue = Float(weightInput), weightValue > 0 else {
+    @discardableResult
+    private func saveChanges() -> Bool {
+        guard let weightValue = Float(weightInput) else {
             warningText = "Please input your weight in number format"
-            return
+            return false
+        }
+
+        guard weightValue > 0 else {
+            warningText = "Please input a weight greater than zero"
+            return false
         }
 
         // Only a date move can collide; a weight-only edit must stay editable even for
@@ -92,13 +102,24 @@ struct WeightEntryDetailView: View {
                     && Calendar.current.isDate($0.date, inSameDayAs: dateInput)
             }) else {
                 warningText = "That date already has a weight entry"
-                return
+                return false
             }
         }
 
         entry.weight = weightValue
         entry.date = dateInput
         warningText = ""
+        return true
+    }
+
+    private func dismissSavingChanges() {
+        // Done sits in .confirmationAction, so it reads as "commit". Discarding a pending
+        // date edit there is what leaves the main page still looking blocked.
+        guard hasChanges else {
+            onDismiss()
+            return
+        }
+        if saveChanges() { onDismiss() }
     }
 
     private func deleteEntry() {
