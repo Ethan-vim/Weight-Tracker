@@ -16,6 +16,8 @@ struct CalorieEstimatorPage: View {
     @State private var libraryItem: PhotosPickerItem?
     @State private var isShowingCamera = false
 
+    @AppStorage("weightGoal") private var weightGoal: String = ""
+
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -201,7 +203,7 @@ struct CalorieEstimatorPage: View {
         state = .loading
 
         do {
-            state = .loaded(try await NutritionService.getCalories(from: image))
+            state = .loaded(try await NutritionService.getCalories(from: image, goal: weightGoal))
         } catch {
             state = .failed(error.localizedDescription)
         }

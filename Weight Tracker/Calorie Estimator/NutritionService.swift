@@ -4,7 +4,7 @@ import PhotosUI
 private let geminiAPIKey = "AQ.Ab8RN6L3mTHn6Qqm591rHkBPLKtIoGIwYDHZeZ9gCF4NzmwH8Q"
 // ListModels still advertises retired models, so this has to match what the key may
 // actually call rather than what the catalog lists.
-private let geminiModel = "gemini-3.6-flash"
+private let geminiModel = "gemini-3.5-flash"
 
 private struct GeminiResponse: Decodable {
     struct Candidate: Decodable {
@@ -50,7 +50,7 @@ struct NutritionService {
         return image
     }
 
-    static func getCalories(from image: UIImage) async throws -> NutritionInfo {
+    static func getCalories(from image: UIImage, goal: String) async throws -> NutritionInfo {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             throw NutritionError.imageEncodingFailed
         }
@@ -59,13 +59,20 @@ struct NutritionService {
         // instead of a guess from the picture alone, and the daily values are spelled out so the
         // percentages mean the same thing on every run. Kept short because the model reasons on
         // its own, and every extra instruction is latency the user waits through.
+        // Only present when the user actually set a goal: an empty goal line is noise the model
+        // still spends latency reading.
+        let trimmedGoal = goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        let goalLine = trimmedGoal.isEmpty
+            ? ""
+            : "The person's goal is: \(trimmedGoal). Aim the advice at that goal, and do not let it change the calorie or nutrient estimates.\n"
+
         let prompt = """
         Identify every distinct food and drink in this image.
         For anything packaged, identify the brand and product and use its published nutrition facts, scaled to the amount actually shown rather than to one serving.
         For anything else, name the dish and scale its typical values to the portion shown, judging the amount from what holds it (a small bowl, a full bowl, a plate, a pan) and from anything in frame that gives scale, such as cutlery or a hand.
         Count the cooking oil, butter, sauce and dressing that add calories without being visible.
         The figures below are the total across everything shown.
-        Respond ONLY with valid JSON, no extra text, in this exact format:
+        \(goalLine)Respond ONLY with valid JSON, no extra text, in this exact format:
         {
           "calories": <estimated total calories as an integer>,
           "proteinPercent": <protein as % of the 50 g daily value, as a number>,

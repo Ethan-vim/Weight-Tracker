@@ -14,11 +14,19 @@ struct WeightEntryDetailView: View {
     @State private var dateInput: Date = Date()
     @State private var warningText: String = ""
 
+    @AppStorage("preferredUnit") private var preferredUnit: WeightUnit = .kilograms
+
+    /// The stored weight rendered in the selected unit, at the precision the form shows. Both the
+    /// Details row and the change check read this so they can never disagree about the value.
+    private var displayedWeight: String {
+        String(format: "%.1f", preferredUnit.fromKilograms(Double(entry.weight)))
+    }
+
     var body: some View {
         Form {
             Section("Details") {
                 LabeledContent("Weight") {
-                    Text(Double(entry.weight), format: .number.precision(.fractionLength(1)))
+                    Text("\(displayedWeight) \(preferredUnit.suffix)")
                 }
                 LabeledContent("Date") {
                     Text(entry.date, format: Date.FormatStyle(date: .abbreviated, time: .omitted))
@@ -26,7 +34,7 @@ struct WeightEntryDetailView: View {
             }
 
             Section("Edit") {
-                TextField("Weight", text: $weightInput)
+                TextField("Weight (\(preferredUnit.suffix))", text: $weightInput)
                     .keyboardType(.decimalPad)
                 DatePicker("Date", selection: $dateInput, displayedComponents: [.date])
             }
@@ -69,15 +77,15 @@ struct WeightEntryDetailView: View {
     }
 
     private var hasChanges: Bool {
-        // weightInput is rendered at one decimal, so a stored 70.25 shows as "70.3".
-        // Comparing against the raw value would report a change the user never made, and
-        // Done saves on changes, so it would quietly rewrite 70.25 to 70.3 on close.
-        // Parsed, not string-compared, so "70.30" and "70.3" stay equal.
-        Float(weightInput) != Float(String(format: "%.1f", entry.weight)) || dateInput != entry.date
+        // Both sides are the displayed unit at one decimal. Comparing against the raw stored
+        // value would report a change the user never made, and Done saves on changes, so it would
+        // quietly rewrite the weight on close. Parsed, not string-compared, so "70.30" and "70.3"
+        // stay equal.
+        Float(weightInput) != Float(displayedWeight) || dateInput != entry.date
     }
 
     private func syncInputs() {
-        weightInput = String(format: "%.1f", entry.weight)
+        weightInput = displayedWeight
         dateInput = entry.date
         warningText = ""
     }
@@ -106,7 +114,8 @@ struct WeightEntryDetailView: View {
             }
         }
 
-        entry.weight = weightValue
+        // Typed in the selected unit, stored in kilograms.
+        entry.weight = Float(preferredUnit.toKilograms(Double(weightValue)))
         entry.date = dateInput
         warningText = ""
         return true

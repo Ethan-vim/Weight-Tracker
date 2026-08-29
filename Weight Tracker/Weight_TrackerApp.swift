@@ -4,6 +4,7 @@ import SwiftData
 enum Page {
     case main
     case calorieEstimator
+    case settings
 }
 
 @main
@@ -31,6 +32,8 @@ struct Weight_TrackerApp: App {
                 ContentView(selectedPage: $selectedPage)
             case .calorieEstimator:
                 CalorieEstimatorPage(selectedPage: $selectedPage)
+            case .settings:
+                SettingsPage(selectedPage: $selectedPage)
             }
         }
         .modelContainer(sharedModelContainer)
