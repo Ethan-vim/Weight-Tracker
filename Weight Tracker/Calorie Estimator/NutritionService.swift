@@ -1,12 +1,15 @@
 import SwiftUI
 import PhotosUI
 
-private let geminiAPIKey = "AQ.Ab8RN6KTLznHf8PmxmO0VEbvwWTXWHoNAkkGDicTOjlo-GKPOg"
+private let geminiAPIKey = "AQ.Ab8RN6L3mTHn6Qqm591rHkBPLKtIoGIwYDHZeZ9gCF4NzmwH8Q"
+// ListModels still advertises retired models, so this has to match what the key may
+// actually call rather than what the catalog lists.
+private let geminiModel = "gemini-3.6-flash"
 
 private struct GeminiResponse: Decodable {
     struct Candidate: Decodable {
         struct Content: Decodable {
-            struct Part: Decodable { var text: String }
+            struct Part: Decodable { var text: String? }
             var parts: [Part]
         }
         var content: Content
@@ -64,7 +67,7 @@ struct NutritionService {
         }
         """
 
-        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(geminiAPIKey)")!)
+        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(geminiModel):generateContent?key=\(geminiAPIKey)")!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
@@ -82,10 +85,14 @@ struct NutritionService {
             throw NutritionError.requestFailed(statusCode)
         }
 
-        guard let responseText = try JSONDecoder()
+        let parts = try JSONDecoder()
             .decode(GeminiResponse.self, from: data)
-            .candidates.first?.content.parts.first?.text
-        else {
+            .candidates.first?.content.parts ?? []
+
+        // Thinking models mix in parts carrying no text, and can split one answer across
+        // several, so drop the empty ones and join rather than trusting the first part.
+        let responseText = parts.compactMap(\.text).joined()
+        guard !responseText.isEmpty else {
             throw NutritionError.emptyResponse
         }
 
