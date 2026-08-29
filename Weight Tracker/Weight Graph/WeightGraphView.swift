@@ -6,9 +6,17 @@ struct WeightGraphView: View {
     let weights: [WeightItem]
     @Binding var selectedEntry: WeightItem?
 
+    @AppStorage("preferredUnit") private var preferredUnit: WeightUnit = .kilograms
+
+    // Entries are stored in kilograms. The plot, the axis and the tap hit test all have to read
+    // through this, or the dots move while the hit test stays where they used to be.
+    private func displayWeight(_ item: WeightItem) -> Double {
+        preferredUnit.fromKilograms(Double(item.weight))
+    }
+
     private var yDomain: ClosedRange<Double> {
         guard !weights.isEmpty else { return 0...200 }
-        let values = weights.map { Double($0.weight) }
+        let values = weights.map(displayWeight)
         let minWeight = values.min() ?? 0
         let maxWeight = values.max() ?? 0
         // Proportional padding keeps the dots clear of the border at any zoom level; the small
@@ -101,7 +109,7 @@ struct WeightGraphView: View {
         Chart(weights) { item in
             LineMark(
                 x: .value("Date", item.date),
-                y: .value("Weight", item.weight)
+                y: .value("Weight", displayWeight(item))
             )
             .interpolationMethod(.linear)
             .foregroundStyle(Color.accentColor.opacity(0.45))
@@ -109,7 +117,7 @@ struct WeightGraphView: View {
 
             PointMark(
                 x: .value("Date", item.date),
-                y: .value("Weight", item.weight)
+                y: .value("Weight", displayWeight(item))
             )
             .symbolSize(isSelected(item) ? 140 : 70)
             .foregroundStyle(isSelected(item) ? Color.accentColor : Color.blue)
@@ -205,7 +213,7 @@ struct WeightGraphView: View {
         for item in weights {
             guard
                 let x = proxy.position(forX: item.date),
-                let y = proxy.position(forY: item.weight)
+                let y = proxy.position(forY: displayWeight(item))
             else { continue }
 
             let distance = hypot(x - tapPoint.x, y - tapPoint.y)

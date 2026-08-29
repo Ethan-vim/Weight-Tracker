@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var weightInput: String = ""
     @State private var warningText: String = ""
     @State private var warningCount: Int = 0
+    @AppStorage("preferredUnit") private var preferredUnit: WeightUnit = .kilograms
     @State private var selectedEntry: WeightItem?
 
     private var isShowingDetail: Binding<Bool> {
@@ -34,7 +35,7 @@ struct ContentView: View {
                 GeometryReader { geo in
                     HStack(spacing: 8) {
                         
-                        TextField("Weight", text: $weightInput)
+                        TextField("Weight (\(preferredUnit.suffix))", text: $weightInput)
                             .textFieldStyle(.roundedBorder)
                             .keyboardType(.decimalPad)
                             .frame(width: geo.size.width * 0.8)
@@ -59,6 +60,16 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.horizontal)
+
+                Button {
+                    selectedPage = .settings
+                } label: {
+                    Text("Settings")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
                 .controlSize(.large)
                 .padding(.horizontal)
 
@@ -117,7 +128,9 @@ struct ContentView: View {
             showWarning("There's already an entry for today")
             return
         }
-        let newWeight = WeightItem(weight: weightValue)
+        // Typed in whichever unit is selected, but stored in kilograms so everything that reads
+        // an entry gets one scale.
+        let newWeight = WeightItem(weight: Float(preferredUnit.toKilograms(Double(weightValue))))
         modelContext.insert(newWeight)
         weightInput = ""
     }
