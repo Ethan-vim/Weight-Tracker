@@ -29,6 +29,7 @@ struct NutritionInfo: Codable {
 enum NutritionError: LocalizedError {
     case imageEncodingFailed
     case requestFailed(Int)
+    case serverOverloaded
     case emptyResponse
 
     var errorDescription: String? {
@@ -37,6 +38,8 @@ enum NutritionError: LocalizedError {
             return "That photo could not be read. Try a different one."
         case .requestFailed(let statusCode):
             return "The estimate request failed (\(statusCode)). Try again."
+        case .serverOverloaded:
+            return "Gemini API is under high load, try again later"
         case .emptyResponse:
             return "The estimate came back empty. Try again."
         }
@@ -133,6 +136,10 @@ struct NutritionService {
             // code is the only thing that yields a message worth showing.
             if let statusCode = (response as? HTTPURLResponse)?.statusCode, statusCode != 200 {
                 guard retryableStatusCodes.contains(statusCode), retriesUsed < backoffs.count else {
+                    // A 503 only reaches here once every retry has already failed, so the load is
+                    // not clearing in seconds and the user is told to come back later rather than
+                    // handed a bare status code to interpret.
+                    if statusCode == 503 { throw NutritionError.serverOverloaded }
                     throw NutritionError.requestFailed(statusCode)
                 }
                 // Task.sleep stays cancellable, so tearing down the caller's Task still ends the
